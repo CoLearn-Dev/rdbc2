@@ -6,3 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mysql = "23.0.1"
+mysql_common = "0.29.2"
+serde = "1.0.154"
+serde_json = "1.0.94"
+sqlparser = "0.32.0"
+
