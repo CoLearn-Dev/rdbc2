@@ -9,7 +9,7 @@ pub(crate) struct MySQLConnection {
 }
 
 impl dbc::Database {
-    pub(crate) fn _get_mysql_connection(url: &str) -> Result<Box<dyn dbc::Connection>, dbc::Error> {
+    pub(crate) fn _get_mysql_connection(&self, url: &str) -> Result<Box<dyn dbc::Connection>, dbc::Error> {
         Ok(Box::new(MySQLConnection{
             connection: mysql::Conn::new(url)?,
         }) as Box<dyn dbc::Connection>)

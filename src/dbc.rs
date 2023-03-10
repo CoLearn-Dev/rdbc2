@@ -15,8 +15,8 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new(url: &str) -> Self {
-        let connection = Database::get_connection(url).unwrap();
+    pub fn new(&self, url: &str) -> Self {
+        let connection = self.get_connection(url).unwrap();
         Database {
             url: url.to_string(),
             connection,
@@ -27,10 +27,10 @@ impl Database {
         self.connection.execute(query)
     }
 
-    fn get_connection(url: &str) -> Result<Box<dyn Connection>, Error> {
+    fn get_connection(&self, url: &str) -> Result<Box<dyn Connection>, Error> {
         // TODO: add conditional compilation?
         if url.starts_with("mysql://") {
-            Ok(_get_mysql_connection(url)?)
+            Ok(self._get_mysql_connection(url)?)
         } else {
             Err("Unsupported dbc type".into())
         }
