@@ -9,6 +9,6 @@ edition = "2021"
 mysql = "23.0.1"
 mysql_common = "0.29.2"
 postgres = "0.19.4"
-serde = { version = "1.0.154", features = ["derive"] }
+serde = { version = "1.0.154", features = ["derive", "rc"] }
 sqlparser = "0.32.0"
 

@@ -50,7 +50,7 @@ pub enum Value {
     Time(bool, u32, u8, u8, u8, u32),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Column {
     pub name: String,
     pub column_type: ColumnType,
@@ -58,7 +58,7 @@ pub struct Column {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Row {
-    values: Vec<Option<Value>>,
+    values: Vec<Value>,
     columns: Arc<[Column]>,
 }
 
@@ -67,6 +67,7 @@ pub struct QueryResult {
     pub rows: Vec<Row>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ColumnType {
     NULL,
     DECIMAL,

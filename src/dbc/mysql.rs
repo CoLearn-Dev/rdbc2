@@ -30,22 +30,22 @@ impl dbc::Connection for MySQLConnection {
         ).collect::<Vec<dbc::Column>>();
         let columns = Arc::from(columns);
 
+
         let mut rows: Vec<dbc::Row> = Vec::new();
         for row in result {
             let row = row?;
-            let mut values: Vec<Option<dbc::Value>> = row.unwrap_raw().iter().map(
+            let values: Vec<dbc::Value> = row.unwrap_raw().iter().map(
                 |value| {
-                    if value.is_null() {
-                        None
+                    if value.is_none() {
+                        dbc::Value::NULL
                     } else {
-                        Some(value.clone().into())
+                        value.as_ref().unwrap().into()
                     }
                 }
-            ).collect(
-            );
+            ).collect();
             rows.push(dbc::Row {
                 values,
-                columns: columns.clone(),
+                columns: Arc::clone(&columns),
             });
         }
         Ok(dbc::QueryResult{
@@ -54,17 +54,17 @@ impl dbc::Connection for MySQLConnection {
     }
 }
 
-impl From<mysql::Value> for dbc::Value {
-    fn from(value: mysql::Value) -> Self {
+impl From<&mysql::Value> for dbc::Value {
+    fn from(value: &mysql::Value) -> Self {
         match value {
             mysql::Value::NULL => dbc::Value::NULL,
-            mysql::Value::Bytes(bytes) => dbc::Value::Bytes(bytes),
-            mysql::Value::Int(int) => dbc::Value::Int(int),
-            mysql::Value::UInt(uint) => dbc::Value::UInt(uint),
-            mysql::Value::Float(float) => dbc::Value::Float(float),
-            mysql::Value::Double(double) => dbc::Value::Double(double),
-            mysql::Value::Date(year, month, day, hour, minute, second, microsecond) => dbc::Value::Date(year, month, day, hour, minute, second, microsecond),
-            mysql::Value::Time(negative, days, hours, minutes, seconds, microseconds) => dbc::Value::Time(negative, days, hours, minutes, seconds, microseconds),
+            mysql::Value::Bytes(bytes) => dbc::Value::Bytes(bytes.clone()),
+            mysql::Value::Int(int) => dbc::Value::Int(*int),
+            mysql::Value::UInt(uint) => dbc::Value::UInt(*uint),
+            mysql::Value::Float(float) => dbc::Value::Float(*float),
+            mysql::Value::Double(double) => dbc::Value::Double(*double),
+            mysql::Value::Date(year, month, day, hour, minute, second, microsecond) => dbc::Value::Date(*year, *month, *day, *hour, *minute, *second, *microsecond),
+            mysql::Value::Time(negative, days, hours, minutes, seconds, microseconds) => dbc::Value::Time(*negative, *days, *hours, *minutes, *seconds, *microseconds),
         }
     }
 }
