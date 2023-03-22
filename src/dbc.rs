@@ -20,7 +20,7 @@ impl Database {
     pub fn new(url: &str) -> Result<Self, Error> {
         let connection = match url {
             url if url.starts_with("mysql://") => mysql::MySQLConnection::get_connection(url)?,
-            url if url.starts_with("sqlite://") => sqlite::SqliteConn::get_connection(url)?,
+            url if url.starts_with("sqlite://") => sqlite::SQLiteConnection::get_connection(url)?,
             _ => return Err("Unsupported dbc type".into()),
         };
 
@@ -32,14 +32,6 @@ impl Database {
 
     pub fn execute_query(&mut self, query: &str) -> Result<QueryResult, Error> {
         self.connection.execute(query)
-    }
-
-    fn get_connection(&self, url: &str) -> Result<Box<dyn Connection>, Error> {
-        if url.starts_with("mysql://") {
-            Ok(self._get_mysql_connection(url)?)
-        } else {
-            Err("Unsupported dbc type".into())
-        }
     }
 }
 

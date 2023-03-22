@@ -26,18 +26,17 @@ impl dbc::Connection for SQLiteConnection {
             }
         ).collect::<Vec<dbc::Column>>();
         let columns = Arc::from(columns);
+        let num_columns = statement.column_count();
 
         let mut rows: Vec<dbc::Row> = Vec::new();
-        let mut statement = statement;
-
-
-        for row in statement.execute([])? {
-            let row = row?;
+        let mut result = statement.query([])?;
+        while let Some(row) = result.next()? {
             let mut values: Vec<dbc::Value> = Vec::new();
-            for i in 0..row.column_count() {
-                let value = row.get_ref_unwrap(i);
-                values.push(value.into());
+            for i in 0..num_columns {
+                let value = row.get_ref(i).unwrap().into();
+                values.push(value);
             }
+
             rows.push(dbc::Row {
                 values,
                 columns: Arc::clone(&columns),
@@ -49,13 +48,13 @@ impl dbc::Connection for SQLiteConnection {
     }
 }
 
-impl From<&rusqlite::types::ValueRef> for dbc::Value {
-    fn from(value: &rusqlite::types::ValueRef) -> Self {
+impl From<rusqlite::types::ValueRef<'_>> for dbc::Value {
+    fn from(value: rusqlite::types::ValueRef) -> Self {
         match value {
             rusqlite::types::ValueRef::Null => dbc::Value::NULL,
-            rusqlite::types::ValueRef::Integer(i) => dbc::Value::Int(*i),
-            rusqlite::types::ValueRef::Real(f) => dbc::Value::Double(*f),
-            rusqlite::types::ValueRef::Text(s) => dbc::Value::String(s.to_string()),
+            rusqlite::types::ValueRef::Integer(i) => dbc::Value::Int(i),
+            rusqlite::types::ValueRef::Real(f) => dbc::Value::Double(f),
+            rusqlite::types::ValueRef::Text(s) => dbc::Value::Bytes(s.to_vec()),
             rusqlite::types::ValueRef::Blob(b) => dbc::Value::Bytes(b.to_vec()),
         }
     }
