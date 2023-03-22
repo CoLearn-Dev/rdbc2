@@ -1,4 +1,6 @@
 mod mysql;
+mod sqlite;
+mod postgres;
 
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
@@ -15,15 +17,20 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new(&self, url: &str) -> Self {
-        let connection = self.get_connection(url).unwrap();
-        Database {
+    pub fn new(url: &str) -> Result<Self, Error> {
+        let connection = match url {
+            url if url.starts_with("mysql://") => mysql::MySQLConnection::get_connection(url)?,
+            url if url.starts_with("sqlite://") => sqlite::SqliteConn::get_connection(url)?,
+            _ => return Err("Unsupported dbc type".into()),
+        };
+
+        Ok(Database {
             url: url.to_string(),
             connection,
-        }
+        })
     }
 
-    pub(crate) fn execute_query(&mut self, query: &str) -> Result<QueryResult, Error> {
+    pub fn execute_query(&mut self, query: &str) -> Result<QueryResult, Error> {
         self.connection.execute(query)
     }
 
@@ -40,6 +47,8 @@ impl Database {
 pub enum Value {
     NULL,
     Bytes(Vec<u8>),
+    String(String),
+    Bool(bool),
     Int(i64),
     UInt(u64),
     Float(f32),
