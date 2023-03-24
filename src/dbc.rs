@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
+
+use serde_json;
+
 mod mysql;
 mod sqlite;
 mod postgres;
-
-use std::sync::Arc;
-use serde::{Serialize, Deserialize};
-use serde_json;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -38,6 +40,11 @@ impl Database {
     pub fn execute_query_and_serialize(&mut self, query: &str) -> Result<String, Error> {
         let result = self.execute_query(query)?;
         Ok(serde_json::to_string(&result)?)
+    }
+
+    pub fn execute_query_and_serialize_raw(&mut self, query: &str) -> Result<Vec<u8>, Error> {
+        let result = self.execute_query(query)?;
+        Ok(serde_json::to_vec(&result)?)
     }
 
     pub fn execute_query_with_params(&mut self, query: &str, params: &[&str]) -> Result<QueryResult, Error> {
