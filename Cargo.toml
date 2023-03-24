@@ -12,5 +12,5 @@ postgres = "0.19.4"
 rusqlite = "0.28.0"
 serde = { version = "1.0.15", features = ["derive", "rc"] }
 sqlparser = "0.32.0"
-tokio = { version = "1.26.0", features = ["macros", "fs"] }
+tokio = { version = "1.25.0", features = ["macros", "fs"] }
 
