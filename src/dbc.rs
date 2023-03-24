@@ -4,6 +4,7 @@ mod postgres;
 
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
+use serde_json;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -32,6 +33,11 @@ impl Database {
 
     pub fn execute_query(&mut self, query: &str) -> Result<QueryResult, Error> {
         self.connection.execute(query)
+    }
+
+    pub fn execute_query_to_json(&mut self, query: &str) -> Result<String, Error> {
+        let result = self.execute_query(query)?;
+        Ok(serde_json::to_string(&result)?)
     }
 }
 
