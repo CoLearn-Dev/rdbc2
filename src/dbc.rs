@@ -35,8 +35,21 @@ impl Database {
         self.connection.execute(query)
     }
 
-    pub fn execute_query_to_json(&mut self, query: &str) -> Result<String, Error> {
+    pub fn execute_query_and_serialize(&mut self, query: &str) -> Result<String, Error> {
         let result = self.execute_query(query)?;
+        Ok(serde_json::to_string(&result)?)
+    }
+
+    pub fn execute_query_with_params(&mut self, query: &str, params: &[&str]) -> Result<QueryResult, Error> {
+        let mut query = query.to_string();
+        for param in params {
+            query = query.replace("?", param);
+        }
+        self.execute_query(&query)
+    }
+
+    pub fn execute_query_with_params_and_serialize(&mut self, query: &str, params: &[&str]) -> Result<String, Error> {
+        let result = self.execute_query_with_params(query, params)?;
         Ok(serde_json::to_string(&result)?)
     }
 }
