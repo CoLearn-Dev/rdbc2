@@ -22,7 +22,9 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
       sqlite:
-        image: sqlite:3.41
+        image: kartoza/sqlite
+        env:
+          SQLITE_DATABASE: test.db
         ports:
           - 5432:5432
     env:
