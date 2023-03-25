@@ -22,16 +22,8 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     env:
-      MYSQL_DATABASE_URL: mysql://root:password@localhost:3306/test_db
+      MYSQL_DATABASE_URL: mysql://root:password@0.0.0.0:3306/test_db
     steps:
-      - name: Wait for MySQL to start
-        run: |
-          until docker exec mysql mysqladmin ping --silent; do
-            echo 'Waiting for MySQL to start...'
-            sleep 1
-          done
-      - name: Create test database
-        run: docker exec -i mysql mysql -u root -p password -e 'CREATE DATABASE test;'
       - uses: actions/checkout@v3
       - name: Build
         run: cargo build
