@@ -1,6 +1,8 @@
-use crate::dbc;
 use std::sync::Arc;
+
 use rusqlite;
+
+use crate::dbc;
 
 pub(crate) struct SQLiteConnection {
     connection: rusqlite::Connection,
@@ -8,8 +10,14 @@ pub(crate) struct SQLiteConnection {
 
 impl SQLiteConnection {
     pub(crate) fn get_connection(url: &str) -> Result<Box<dyn dbc::Connection>, dbc::Error> {
+        let connection;
+        if url == "sqlite://:memory:" {
+            connection = rusqlite::Connection::open_in_memory()?;
+        } else {
+            connection = rusqlite::Connection::open(url)?;
+        }
         Ok(Box::new(SQLiteConnection {
-            connection: rusqlite::Connection::open(url)?,
+            connection,
         }) as Box<dyn dbc::Connection>)
     }
 }
@@ -42,7 +50,7 @@ impl dbc::Connection for SQLiteConnection {
                 columns: Arc::clone(&columns),
             });
         }
-        Ok(dbc::QueryResult{
+        Ok(dbc::QueryResult {
             rows,
         })
     }

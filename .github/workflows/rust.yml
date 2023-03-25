@@ -21,15 +21,8 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      sqlite:
-        image: kartoza/sqlite
-        env:
-          SQLITE_DATABASE: test.db
-        ports:
-          - 5432:5432
     env:
       MYSQL_DATABASE_URL: mysql://root:password@0.0.0.0:3306/test_db
-      SQLITE_DATABASE_URL: sqlite://test.db
     steps:
       - uses: actions/checkout@v3
       - name: Build
