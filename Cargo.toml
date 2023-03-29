@@ -2,6 +2,10 @@
 name = "rdbc2"
 version = "0.1.0"
 edition = "2021"
+authors = ["nociza"]
+description = "Rust Database Connectivity Interface"
+repository = "https://github.com/CoLearn-Dev/rdbc2"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
