@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-
 use serde_json;
 
 mod mysql;
-mod sqlite;
 mod postgres;
+mod sqlite;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -47,7 +46,11 @@ impl Database {
         Ok(serde_json::to_vec(&result)?)
     }
 
-    pub fn execute_query_with_params(&mut self, query: &str, params: &[&str]) -> Result<QueryResult, Error> {
+    pub fn execute_query_with_params(
+        &mut self,
+        query: &str,
+        params: &[&str],
+    ) -> Result<QueryResult, Error> {
         let mut query = query.to_string();
         for param in params {
             query = query.replace("?", param);
@@ -55,7 +58,11 @@ impl Database {
         self.execute_query(&query)
     }
 
-    pub fn execute_query_with_params_and_serialize(&mut self, query: &str, params: &[&str]) -> Result<String, Error> {
+    pub fn execute_query_with_params_and_serialize(
+        &mut self,
+        query: &str,
+        params: &[&str],
+    ) -> Result<String, Error> {
         let result = self.execute_query_with_params(query, params)?;
         Ok(serde_json::to_string(&result)?)
     }
@@ -97,24 +104,114 @@ pub struct QueryResult {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ColumnType {
     NULL,
+    NUMERIC,
     DECIMAL,
+    DECIMAL_NEW,
     INT,
+    INT2,
+    INT4,
+    INT8,
+    INT24,
     TINY,
     SHORT,
     LONG,
     LONGLONG,
     FLOAT,
+    FLOAT4,
+    FLOAT8,
     BIT,
+    BOOL,
     DOUBLE,
     STRING,
+    VARCHAR,
+    TEXT,
+    CHAR,
+    BYTEA,
     TIMESTAMP,
+    TIMESTAMPTZ,
     DATE,
     TIME,
+    TIMETZ,
+    INTERVAL,
     YEAR,
     DATETIME,
     JSON,
+    JSONB,
     ENUM,
     SET,
     BLOB,
+    BLOB_TINY,
+    BLOB_MEDIUM,
+    BLOB_LONG,
     GEOMETRY,
+    UUID,
+    OID,
+    XML,
+    CIDR,
+    INET,
+    MACADDR,
+    VARBIT,
+    REFCURSOR,
 }
+
+macro_rules! add_postgres_types {
+    ($( $existing_variant:ident ),* ) => {
+        pub enum ColumnType {
+            $(
+                $existing_variant,
+            )*
+            Postgres(postgres::types::Type),
+        }
+    };
+}
+
+add_postgres_types!(
+    NULL,
+    NUMERIC,
+    DECIMAL,
+    DECIMAL_NEW,
+    INT,
+    INT2,
+    INT4,
+    INT8,
+    INT24,
+    TINY,
+    SHORT,
+    LONG,
+    LONGLONG,
+    FLOAT,
+    FLOAT4,
+    FLOAT8,
+    BIT,
+    BOOL,
+    DOUBLE,
+    STRING,
+    VARCHAR,
+    TEXT,
+    CHAR,
+    BYTEA,
+    TIMESTAMP,
+    TIMESTAMPTZ,
+    DATE,
+    TIME,
+    TIMETZ,
+    INTERVAL,
+    YEAR,
+    DATETIME,
+    JSON,
+    JSONB,
+    ENUM,
+    SET,
+    BLOB,
+    BLOB_TINY,
+    BLOB_MEDIUM,
+    BLOB_LONG,
+    GEOMETRY,
+    UUID,
+    OID,
+    XML,
+    CIDR,
+    INET,
+    MACADDR,
+    VARBIT,
+);
