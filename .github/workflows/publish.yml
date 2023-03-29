@@ -22,4 +22,4 @@ jobs:
       - name: Publish
         uses: katyo/publish-crates@v2
         with:
-          registry-token: ${{ secrets.CARGO_IO_TOKEN }}
+          registry-token: ${{ secrets.CRATES_IO_TOKEN }}
