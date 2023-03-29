@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
+use crate::dbc;
 use mysql;
 use mysql::prelude::Queryable;
 use mysql_common::constants::ColumnType;
-
-use crate::dbc;
+use std::sync::Arc;
 
 pub(crate) struct MySQLConnection {
     connection: mysql::Conn,
