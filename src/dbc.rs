@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-
 use serde_json;
 
 mod mysql;
-mod sqlite;
 mod postgres;
+mod sqlite;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -47,15 +46,31 @@ impl Database {
         Ok(serde_json::to_vec(&result)?)
     }
 
-    pub fn execute_query_with_params(&mut self, query: &str, params: &[&str]) -> Result<QueryResult, Error> {
+    pub fn execute_query_with_params(
+        &mut self,
+        query: &str,
+        params: &[&str],
+    ) -> Result<QueryResult, Error> {
         let mut query = query.to_string();
         for param in params {
-            query = query.replace("?", param);
+            let quoted_param = if let Some(_) = param.strip_prefix('\'') {
+                // If the parameter already has single quotes, don't add them again.
+                // This avoids SQL injection vulnerabilities when the parameter contains a quote.
+                param.to_string()
+            } else {
+                // If the parameter doesn't have single quotes, add them.
+                format!("'{}'", param)
+            };
+            query = query.replacen("?", quoted_param.as_str(), 1);
         }
         self.execute_query(&query)
     }
 
-    pub fn execute_query_with_params_and_serialize(&mut self, query: &str, params: &[&str]) -> Result<String, Error> {
+    pub fn execute_query_with_params_and_serialize(
+        &mut self,
+        query: &str,
+        params: &[&str],
+    ) -> Result<String, Error> {
         let result = self.execute_query_with_params(query, params)?;
         Ok(serde_json::to_string(&result)?)
     }
@@ -87,6 +102,31 @@ pub struct Column {
 pub struct Row {
     values: Vec<Value>,
     columns: Arc<[Column]>,
+}
+
+impl Row {
+    pub fn new(values: Vec<Value>, columns: Arc<[Column]>) -> Self {
+        Row { values, columns }
+    }
+
+    pub fn get_value(&self, index: usize) -> Option<&Value> {
+        self.values.get(index)
+    }
+
+    pub fn get_column(&self, index: usize) -> Option<&Column> {
+        self.columns.get(index)
+    }
+
+    pub fn get_value_by_name(&self, name: &str) -> Option<&Value> {
+        self.columns
+            .iter()
+            .position(|column| column.name == name)
+            .and_then(|index| self.values.get(index))
+    }
+
+    pub fn get_column_by_name(&self, name: &str) -> Option<&Column> {
+        self.columns.iter().find(|column| column.name == name)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
