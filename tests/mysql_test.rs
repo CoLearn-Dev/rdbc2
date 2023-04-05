@@ -128,7 +128,7 @@ async fn test_mysql_query_with_params_and_serialize() -> Result<(), Error> {
     // Select all rows from test_table
     let select_query = "SELECT * FROM test_table WHERE id = ?";
     let result = database.execute_query_with_params_and_serialize(select_query, &["1"])?;
-    let expected_result = r#"{"rows":[{"values":[{"Bytes":[49]},{"Bytes":[117,112,100,97,116,101,100]}],"columns":[{"name":"id","column_type":"LONG"},{"name":"name","column_type":"STRING"}]}]}"#;
+    let expected_result = r#"{"rows":[{"values":[{"Bytes":[49]},{"Bytes":[117,112,100,97,116,101,100]}],"columns":[{"name":"id","column_type":"LONG"},{"name":"name","column_type":"STRING"}]}],"affected_rows":0}"#;
     assert_eq!(result, expected_result);
 
     // deserialize the result and verify the data

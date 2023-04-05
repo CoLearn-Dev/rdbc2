@@ -1,7 +1,9 @@
 use std::sync::Arc;
+
 use mysql;
 use mysql::prelude::Queryable;
 use mysql_common::constants::ColumnType;
+
 use crate::dbc;
 
 pub(crate) struct MySQLConnection {
@@ -19,36 +21,40 @@ impl MySQLConnection {
 impl dbc::Connection for MySQLConnection {
     fn execute(&mut self, query: &str) -> Result<dbc::QueryResult, dbc::Error> {
         let result = self.connection.query_iter(query)?;
-        let columns = result.columns().as_ref().iter().map(
-            |column| {
-                dbc::Column {
-                    name: column.name_str().to_string(),
-                    column_type: column.column_type().into(),
-                }
-            }
-        ).collect::<Vec<dbc::Column>>();
+        let affected_rows = result.affected_rows() as usize;
+        let columns = result
+            .columns()
+            .as_ref()
+            .iter()
+            .map(|column| dbc::Column {
+                name: column.name_str().to_string(),
+                column_type: column.column_type().into(),
+            })
+            .collect::<Vec<dbc::Column>>();
         let columns = Arc::from(columns);
-
 
         let mut rows: Vec<dbc::Row> = Vec::new();
         for row in result {
             let row = row?;
-            let values: Vec<dbc::Value> = row.unwrap_raw().iter().map(
-                |value| {
+            let values: Vec<dbc::Value> = row
+                .unwrap_raw()
+                .iter()
+                .map(|value| {
                     if value.is_none() {
                         dbc::Value::NULL
                     } else {
                         value.as_ref().unwrap().into()
                     }
-                }
-            ).collect();
+                })
+                .collect();
             rows.push(dbc::Row {
                 values,
                 columns: Arc::clone(&columns),
             });
         }
-        Ok(dbc::QueryResult{
+        Ok(dbc::QueryResult {
             rows,
+            affected_rows,
         })
     }
 }
@@ -62,8 +68,12 @@ impl From<&mysql::Value> for dbc::Value {
             mysql::Value::UInt(uint) => dbc::Value::UInt(*uint),
             mysql::Value::Float(float) => dbc::Value::Float(*float),
             mysql::Value::Double(double) => dbc::Value::Double(*double),
-            mysql::Value::Date(year, month, day, hour, minute, second, microsecond) => dbc::Value::Date(*year, *month, *day, *hour, *minute, *second, *microsecond),
-            mysql::Value::Time(negative, days, hours, minutes, seconds, microseconds) => dbc::Value::Time(*negative, *days, *hours, *minutes, *seconds, *microseconds),
+            mysql::Value::Date(year, month, day, hour, minute, second, microsecond) => {
+                dbc::Value::Date(*year, *month, *day, *hour, *minute, *second, *microsecond)
+            }
+            mysql::Value::Time(negative, days, hours, minutes, seconds, microseconds) => {
+                dbc::Value::Time(*negative, *days, *hours, *minutes, *seconds, *microseconds)
+            }
         }
     }
 }

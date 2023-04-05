@@ -16,25 +16,33 @@ impl SQLiteConnection {
         } else {
             connection = rusqlite::Connection::open(url)?;
         }
-        Ok(Box::new(SQLiteConnection {
-            connection,
-        }) as Box<dyn dbc::Connection>)
+        Ok(Box::new(SQLiteConnection { connection }) as Box<dyn dbc::Connection>)
     }
 }
 
 impl dbc::Connection for SQLiteConnection {
     fn execute(&mut self, query: &str) -> Result<dbc::QueryResult, dbc::Error> {
         let mut statement = self.connection.prepare(query)?;
-        let columns = statement.column_names().iter().map(
-            |column| {
+        let columns = statement
+            .column_names()
+            .iter()
+            .map(|column| {
                 dbc::Column {
                     name: column.to_string(),
                     column_type: dbc::ColumnType::STRING, // TODO: get column type
                 }
-            }
-        ).collect::<Vec<dbc::Column>>();
+            })
+            .collect::<Vec<dbc::Column>>();
         let columns = Arc::from(columns);
         let num_columns = statement.column_count();
+
+        if !query.starts_with("SELECT") {
+            let affected_rows = statement.execute([])?;
+            return Ok(dbc::QueryResult {
+                rows: Vec::new(),
+                affected_rows,
+            });
+        }
 
         let mut rows: Vec<dbc::Row> = Vec::new();
         let mut result = statement.query([])?;
@@ -50,8 +58,10 @@ impl dbc::Connection for SQLiteConnection {
                 columns: Arc::clone(&columns),
             });
         }
+        let affected_rows = rows.len();
         Ok(dbc::QueryResult {
             rows,
+            affected_rows,
         })
     }
 }

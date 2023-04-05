@@ -132,6 +132,7 @@ impl Row {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryResult {
     pub rows: Vec<Row>,
+    pub affected_rows: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
