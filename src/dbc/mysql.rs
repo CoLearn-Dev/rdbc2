@@ -1,3 +1,4 @@
+use std::io::Bytes;
 use std::sync::Arc;
 
 use mysql;
@@ -20,42 +21,91 @@ impl MySQLConnection {
 
 impl dbc::Connection for MySQLConnection {
     fn execute(&mut self, query: &str) -> Result<dbc::QueryResult, dbc::Error> {
-        let result = self.connection.query_iter(query)?;
-        let affected_rows = result.affected_rows() as usize;
-        let columns = result
-            .columns()
-            .as_ref()
-            .iter()
-            .map(|column| dbc::Column {
-                name: column.name_str().to_string(),
-                column_type: column.column_type().into(),
-            })
-            .collect::<Vec<dbc::Column>>();
-        let columns = Arc::from(columns);
+        match self.connection.prep(query) {
+            Ok(stmt) => {
+                let result = self.connection.exec_iter(stmt, ())?;
+                let affected_rows = result.affected_rows() as usize;
+                let columns = result
+                    .columns()
+                    .as_ref()
+                    .iter()
+                    .map(|column| dbc::Column {
+                        name: column.name_str().to_string(),
+                        column_type: column.column_type().into(),
+                    })
+                    .collect::<Vec<dbc::Column>>();
+                let columns = Arc::from(columns);
 
-        let mut rows: Vec<dbc::Row> = Vec::new();
-        for row in result {
-            let row = row?;
-            let values: Vec<dbc::Value> = row
-                .unwrap_raw()
-                .iter()
-                .map(|value| {
-                    if value.is_none() {
-                        dbc::Value::NULL
-                    } else {
-                        value.as_ref().unwrap().into()
+                let mut rows: Vec<dbc::Row> = Vec::new();
+                for row in result {
+                    let row = row.unwrap();
+                    let values: Vec<dbc::Value> = row
+                        .unwrap_raw()
+                        .iter()
+                        .map(|value| {
+                            if value.is_none() {
+                                dbc::Value::NULL
+                            } else {
+                                println!("{:?}", value);
+                                value.as_ref().unwrap().into()
+                            }
+                        })
+                        .collect();
+                    rows.push(dbc::Row {
+                        values,
+                        columns: Arc::clone(&columns),
+                    });
+                }
+                return Ok(dbc::QueryResult {
+                    rows,
+                    affected_rows,
+                });
+            }
+            Err(err) => {
+                if err.to_string().contains(
+                    "This command is not supported in the prepared statement protocol yet",
+                ) {
+                    let result = self.connection.query_iter(query)?;
+                    let affected_rows = result.affected_rows() as usize;
+                    let columns = result
+                        .columns()
+                        .as_ref()
+                        .iter()
+                        .map(|column| dbc::Column {
+                            name: column.name_str().to_string(),
+                            column_type: column.column_type().into(),
+                        })
+                        .collect::<Vec<dbc::Column>>();
+                    let columns = Arc::from(columns);
+
+                    let mut rows: Vec<dbc::Row> = Vec::new();
+                    for row in result {
+                        let row = row.unwrap();
+                        let values: Vec<dbc::Value> = row
+                            .unwrap_raw()
+                            .iter()
+                            .map(|value| {
+                                if value.is_none() {
+                                    dbc::Value::NULL
+                                } else {
+                                    println!("{:?}", value);
+                                    value.as_ref().unwrap().into()
+                                }
+                            })
+                            .collect();
+                        rows.push(dbc::Row {
+                            values,
+                            columns: Arc::clone(&columns),
+                        });
                     }
-                })
-                .collect();
-            rows.push(dbc::Row {
-                values,
-                columns: Arc::clone(&columns),
-            });
-        }
-        Ok(dbc::QueryResult {
-            rows,
-            affected_rows,
-        })
+                    return Ok(dbc::QueryResult {
+                        rows,
+                        affected_rows,
+                    });
+                }
+                return Err(dbc::Error::from(err));
+            }
+        };
     }
 }
 
@@ -82,21 +132,21 @@ impl From<ColumnType> for dbc::ColumnType {
     fn from(column_type: ColumnType) -> Self {
         match column_type {
             ColumnType::MYSQL_TYPE_DECIMAL => dbc::ColumnType::DECIMAL,
-            ColumnType::MYSQL_TYPE_TINY => dbc::ColumnType::TINY,
-            ColumnType::MYSQL_TYPE_SHORT => dbc::ColumnType::SHORT,
-            ColumnType::MYSQL_TYPE_LONG => dbc::ColumnType::LONG,
+            ColumnType::MYSQL_TYPE_TINY => dbc::ColumnType::INT,
+            ColumnType::MYSQL_TYPE_SHORT => dbc::ColumnType::INT,
+            ColumnType::MYSQL_TYPE_LONG => dbc::ColumnType::INT,
+            ColumnType::MYSQL_TYPE_INT24 => dbc::ColumnType::INT,
+            ColumnType::MYSQL_TYPE_LONGLONG => dbc::ColumnType::INT,
             ColumnType::MYSQL_TYPE_FLOAT => dbc::ColumnType::FLOAT,
             ColumnType::MYSQL_TYPE_DOUBLE => dbc::ColumnType::DOUBLE,
             ColumnType::MYSQL_TYPE_NULL => dbc::ColumnType::NULL,
             ColumnType::MYSQL_TYPE_TIMESTAMP => dbc::ColumnType::TIMESTAMP,
-            ColumnType::MYSQL_TYPE_LONGLONG => dbc::ColumnType::LONGLONG,
-            ColumnType::MYSQL_TYPE_INT24 => dbc::ColumnType::INT,
             ColumnType::MYSQL_TYPE_DATE => dbc::ColumnType::DATE,
             ColumnType::MYSQL_TYPE_TIME => dbc::ColumnType::TIME,
             ColumnType::MYSQL_TYPE_DATETIME => dbc::ColumnType::TIMESTAMP,
-            ColumnType::MYSQL_TYPE_YEAR => dbc::ColumnType::INT,
+            ColumnType::MYSQL_TYPE_YEAR => dbc::ColumnType::YEAR,
             ColumnType::MYSQL_TYPE_NEWDATE => dbc::ColumnType::DATE, // Internal? do we need this?
-            ColumnType::MYSQL_TYPE_VARCHAR => dbc::ColumnType::STRING,
+            ColumnType::MYSQL_TYPE_VARCHAR => dbc::ColumnType::VARCHAR,
             ColumnType::MYSQL_TYPE_BIT => dbc::ColumnType::BIT,
             ColumnType::MYSQL_TYPE_TIMESTAMP2 => dbc::ColumnType::TIMESTAMP,
             ColumnType::MYSQL_TYPE_DATETIME2 => dbc::ColumnType::DATETIME,
@@ -109,12 +159,10 @@ impl From<ColumnType> for dbc::ColumnType {
             ColumnType::MYSQL_TYPE_MEDIUM_BLOB => dbc::ColumnType::BLOB,
             ColumnType::MYSQL_TYPE_LONG_BLOB => dbc::ColumnType::BLOB,
             ColumnType::MYSQL_TYPE_BLOB => dbc::ColumnType::BLOB,
-            ColumnType::MYSQL_TYPE_VAR_STRING => dbc::ColumnType::STRING,
+            ColumnType::MYSQL_TYPE_VAR_STRING => dbc::ColumnType::VARCHAR,
             ColumnType::MYSQL_TYPE_STRING => dbc::ColumnType::STRING,
             ColumnType::MYSQL_TYPE_GEOMETRY => dbc::ColumnType::GEOMETRY,
-            _ => {
-                panic!("Unknown column type: {:?}", column_type);
-            }
+            _ => dbc::ColumnType::UNKNOWN, // Create an issue or PR if you need more type support
         }
     }
 }

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use rusqlite;
+use rusqlite::types::Type;
 
 use crate::dbc;
 
@@ -24,12 +25,13 @@ impl dbc::Connection for SQLiteConnection {
     fn execute(&mut self, query: &str) -> Result<dbc::QueryResult, dbc::Error> {
         let mut statement = self.connection.prepare(query)?;
         let columns = statement
-            .column_names()
+            .columns()
             .iter()
             .map(|column| {
+                let sqlite_type = column.decl_type().unwrap();
                 dbc::Column {
-                    name: column.to_string(),
-                    column_type: dbc::ColumnType::STRING, // TODO: get column type
+                    name: column.name().to_string(),
+                    column_type: sqlite_type.into(),
                 }
             })
             .collect::<Vec<dbc::Column>>();
@@ -58,10 +60,9 @@ impl dbc::Connection for SQLiteConnection {
                 columns: Arc::clone(&columns),
             });
         }
-        let affected_rows = rows.len();
         Ok(dbc::QueryResult {
             rows,
-            affected_rows,
+            affected_rows: 0 as usize,
         })
     }
 }
@@ -74,6 +75,18 @@ impl From<rusqlite::types::ValueRef<'_>> for dbc::Value {
             rusqlite::types::ValueRef::Real(f) => dbc::Value::Double(f),
             rusqlite::types::ValueRef::Text(s) => dbc::Value::Bytes(s.to_vec()),
             rusqlite::types::ValueRef::Blob(b) => dbc::Value::Bytes(b.to_vec()),
+        }
+    }
+}
+
+impl From<&str> for dbc::ColumnType {
+    fn from(sqlite_type: &str) -> Self {
+        match sqlite_type {
+            "INTEGER" => dbc::ColumnType::INT,
+            "REAL" => dbc::ColumnType::DOUBLE,
+            "TEXT" => dbc::ColumnType::VARCHAR,
+            "BLOB" => dbc::ColumnType::BLOB,
+            _ => dbc::ColumnType::UNKNOWN, // Create an issue or PR if you need more type support
         }
     }
 }

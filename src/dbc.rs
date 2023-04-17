@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 
 mod mysql;
-mod postgres;
 mod sqlite;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -139,15 +138,13 @@ pub struct QueryResult {
 pub enum ColumnType {
     NULL,
     DECIMAL,
+    // 64 bit, collective type for TINY, SHORT, LONG, LONGLONG
     INT,
-    TINY,
-    SHORT,
-    LONG,
-    LONGLONG,
     FLOAT,
     BIT,
     DOUBLE,
     STRING,
+    VARCHAR,
     TIMESTAMP,
     DATE,
     TIME,
@@ -158,4 +155,5 @@ pub enum ColumnType {
     SET,
     BLOB,
     GEOMETRY,
+    UNKNOWN,
 }
