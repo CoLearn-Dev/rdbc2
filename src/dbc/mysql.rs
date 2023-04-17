@@ -20,8 +20,10 @@ impl MySQLConnection {
 }
 
 impl dbc::Connection for MySQLConnection {
+    /// Execute a query and return a dbc::QueryResult
     fn execute(&mut self, query: &str) -> Result<dbc::QueryResult, dbc::Error> {
-        match self.connection.prep(query) {
+        // Automatically prepare the query to handle native MySQL types
+        return match self.connection.prep(query) {
             Ok(stmt) => {
                 let result = self.connection.exec_iter(stmt, ())?;
                 let affected_rows = result.affected_rows() as usize;
@@ -46,7 +48,6 @@ impl dbc::Connection for MySQLConnection {
                             if value.is_none() {
                                 dbc::Value::NULL
                             } else {
-                                println!("{:?}", value);
                                 value.as_ref().unwrap().into()
                             }
                         })
@@ -56,10 +57,10 @@ impl dbc::Connection for MySQLConnection {
                         columns: Arc::clone(&columns),
                     });
                 }
-                return Ok(dbc::QueryResult {
+                Ok(dbc::QueryResult {
                     rows,
                     affected_rows,
-                });
+                })
             }
             Err(err) => {
                 if err.to_string().contains(
@@ -88,7 +89,6 @@ impl dbc::Connection for MySQLConnection {
                                 if value.is_none() {
                                     dbc::Value::NULL
                                 } else {
-                                    println!("{:?}", value);
                                     value.as_ref().unwrap().into()
                                 }
                             })
@@ -103,7 +103,7 @@ impl dbc::Connection for MySQLConnection {
                         affected_rows,
                     });
                 }
-                return Err(dbc::Error::from(err));
+                Err(dbc::Error::from(err))
             }
         };
     }
