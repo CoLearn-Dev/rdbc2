@@ -61,7 +61,7 @@ impl dbc::Connection for SQLiteConnection {
         }
         Ok(dbc::QueryResult {
             rows,
-            affected_rows: 0 as usize,
+            affected_rows: 0_usize,
         })
     }
 }

@@ -41,7 +41,7 @@ impl Database {
     ) -> Result<QueryResult, Error> {
         let mut query = query.to_string();
         for param in params {
-            let quoted_param = if let Some(_) = param.strip_prefix('\'') {
+            let quoted_param = if param.strip_prefix('\'').is_some() {
                 // If the parameter already has single quotes, don't add them again.
                 // This avoids SQL injection vulnerabilities when the parameter contains a quote.
                 param.to_string()
@@ -49,7 +49,7 @@ impl Database {
                 // If the parameter doesn't have single quotes, add them.
                 format!("'{}'", param)
             };
-            query = query.replacen("?", quoted_param.as_str(), 1);
+            query = query.replacen('?', quoted_param.as_str(), 1);
         }
         self.execute_query(&query)
     }
