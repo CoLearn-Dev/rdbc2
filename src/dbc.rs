@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use serde_json;
 
 mod mysql;
 mod sqlite;
@@ -35,16 +34,6 @@ impl Database {
         self.connection.execute(query)
     }
 
-    pub fn execute_query_and_serialize(&mut self, query: &str) -> Result<String, Error> {
-        let result = self.execute_query(query)?;
-        Ok(serde_json::to_string(&result)?)
-    }
-
-    pub fn execute_query_and_serialize_raw(&mut self, query: &str) -> Result<Vec<u8>, Error> {
-        let result = self.execute_query(query)?;
-        Ok(serde_json::to_vec(&result)?)
-    }
-
     pub fn execute_query_with_params(
         &mut self,
         query: &str,
@@ -63,15 +52,6 @@ impl Database {
             query = query.replacen("?", quoted_param.as_str(), 1);
         }
         self.execute_query(&query)
-    }
-
-    pub fn execute_query_with_params_and_serialize(
-        &mut self,
-        query: &str,
-        params: &[&str],
-    ) -> Result<String, Error> {
-        let result = self.execute_query_with_params(query, params)?;
-        Ok(serde_json::to_string(&result)?)
     }
 }
 

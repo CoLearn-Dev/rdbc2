@@ -1,5 +1,3 @@
-use mysql;
-
 use rdbc2::dbc;
 
 mod common;

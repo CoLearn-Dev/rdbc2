@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use rusqlite;
-use rusqlite::types::Type;
 
 use crate::dbc;
 

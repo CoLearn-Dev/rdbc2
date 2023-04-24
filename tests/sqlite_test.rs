@@ -28,6 +28,13 @@ async fn test_sqlite_simple_query() -> Result<(), Error> {
 
 #[tokio::test]
 #[serial_test::serial]
+async fn test_sqlite_query_with_params() -> Result<(), Error> {
+    let database = _prepare_sqlite_database()?;
+    Ok(common::test_query_with_params(database).await?)
+}
+
+#[tokio::test]
+#[serial_test::serial]
 async fn test_sqlite_query_with_params_and_serialize() -> Result<(), Error> {
     let database = _prepare_sqlite_database()?;
     Ok(common::test_query_with_params_and_serialize(database).await?)

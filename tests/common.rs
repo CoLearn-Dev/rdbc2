@@ -1,15 +1,13 @@
 use rdbc2::dbc;
 
-type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
-
-fn _cleanup_database(mut database: dbc::Database) -> Result<(), Error> {
+fn _cleanup_database(mut database: dbc::Database) -> Result<(), dbc::Error> {
     let query = "DROP TABLE IF EXISTS test_table";
     database.execute_query(query)?;
 
     Ok(())
 }
 
-pub(crate) async fn test_simple_query(mut database: dbc::Database) -> Result<(), Error> {
+pub(crate) async fn test_simple_query(mut database: dbc::Database) -> Result<(), dbc::Error> {
     // Create a test table with two rows
     let insert_query = "INSERT INTO test_table (name) VALUES ('test1'), ('test2')";
     database.execute_query(insert_query)?;
@@ -53,7 +51,7 @@ pub(crate) async fn test_simple_query(mut database: dbc::Database) -> Result<(),
     Ok(())
 }
 
-pub(crate) async fn test_query_with_params(mut database: dbc::Database) -> Result<(), Error> {
+pub(crate) async fn test_query_with_params(mut database: dbc::Database) -> Result<(), dbc::Error> {
     // Insert two rows into test_table
     let insert_query = "INSERT INTO test_table (name) VALUES (?)";
     let result = database.execute_query_with_params(insert_query, &["test1"])?;
@@ -102,7 +100,7 @@ pub(crate) async fn test_query_with_params(mut database: dbc::Database) -> Resul
 
 pub(crate) async fn test_query_with_params_and_serialize(
     mut database: dbc::Database,
-) -> Result<(), Error> {
+) -> Result<(), dbc::Error> {
     // Insert two rows into test_table
     let insert_query = "INSERT INTO test_table (name) VALUES (?)";
     let result = database.execute_query_with_params(insert_query, &["test1"])?;
@@ -117,7 +115,10 @@ pub(crate) async fn test_query_with_params_and_serialize(
 
     // Select the first row from test_table where the name is "updated"
     let select_query = "SELECT * FROM test_table WHERE id = ?";
-    let result = database.execute_query_with_params_and_serialize(select_query, &["1"])?;
+    let result = database.execute_query_with_params(select_query, &["1"])?;
+
+    // Serialize the result
+    let result = serde_json::to_string(&result)?;
 
     // Verify the data returned by the query
     let expected_result = r#"{"rows":[{"values":[{"Int":1},{"Bytes":[117,112,100,97,116,101,100]}],"columns":[{"name":"id","column_type":"INT"},{"name":"name","column_type":"VARCHAR"}]}],"affected_rows":0}"#;

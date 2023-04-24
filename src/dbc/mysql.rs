@@ -1,4 +1,3 @@
-use std::io::Bytes;
 use std::sync::Arc;
 
 use mysql;
