@@ -12,7 +12,6 @@ pub trait Connection {
 }
 
 pub struct Database {
-    pub(crate) url: String,
     pub(crate) connection: Box<dyn Connection>,
 }
 
@@ -24,10 +23,7 @@ impl Database {
             _ => return Err("Unsupported dbc type".into()),
         };
 
-        Ok(Database {
-            url: url.to_string(),
-            connection,
-        })
+        Ok(Database { connection })
     }
 
     pub fn execute_query(&mut self, query: &str) -> Result<QueryResult, Error> {
@@ -58,6 +54,7 @@ impl Database {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Value {
     NULL,
+    #[serde(with = "base64")]
     Bytes(Vec<u8>),
     String(String),
     Bool(bool),
@@ -136,4 +133,30 @@ pub enum ColumnType {
     BLOB,
     GEOMETRY,
     UNKNOWN,
+}
+
+mod base64 {
+    use base64::Engine;
+    use serde::{Deserialize, Serialize};
+    use serde::{Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(v: &Vec<u8>, s: S) -> Result<S::Ok, S::Error> {
+        let engine = base64::engine::GeneralPurpose::new(
+            &base64::alphabet::STANDARD,
+            base64::engine::general_purpose::NO_PAD,
+        );
+        let base64 = engine.encode(v);
+        String::serialize(&base64, s)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
+        let base64 = String::deserialize(d)?;
+        let engine = base64::engine::GeneralPurpose::new(
+            &base64::alphabet::STANDARD,
+            base64::engine::general_purpose::NO_PAD,
+        );
+        engine
+            .decode(base64.as_bytes())
+            .map_err(serde::de::Error::custom)
+    }
 }
