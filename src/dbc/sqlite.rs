@@ -41,7 +41,7 @@ impl dbc::Connection for SQLiteConnection {
             let affected_rows = statement.execute([])?;
             return Ok(dbc::QueryResult {
                 rows: Vec::new(),
-                affected_rows,
+                affected_row_count: affected_rows,
             });
         }
 
@@ -61,7 +61,7 @@ impl dbc::Connection for SQLiteConnection {
         }
         Ok(dbc::QueryResult {
             rows,
-            affected_rows: 0_usize,
+            affected_row_count: 0_usize,
         })
     }
 }
