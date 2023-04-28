@@ -58,7 +58,7 @@ impl dbc::Connection for MySQLConnection {
                 }
                 Ok(dbc::QueryResult {
                     rows,
-                    affected_rows,
+                    affected_row_count: affected_rows,
                 })
             }
             Err(err) => {
@@ -99,7 +99,7 @@ impl dbc::Connection for MySQLConnection {
                     }
                     return Ok(dbc::QueryResult {
                         rows,
-                        affected_rows,
+                        affected_row_count: affected_rows,
                     });
                 }
                 Err(dbc::Error::from(err))

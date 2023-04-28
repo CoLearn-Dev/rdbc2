@@ -8,7 +8,7 @@ fn _get_mysql_connection_url() -> String {
     if std::env::var("MYSQL_DATABASE_URL").is_ok() {
         std::env::var("MYSQL_DATABASE_URL").unwrap()
     } else {
-        "mysql://localhost:3306/?user=nociza&password=password".to_owned()
+        panic!("Please set the environment variable MYSQL_DATABASE_URL to a valid MySQL connection string.");
     }
 }
 

@@ -32,7 +32,7 @@ pub(crate) async fn test_simple_query(mut database: dbc::Database) -> Result<(),
     // Update the name of the first row to "updated"
     let update_query = "UPDATE test_table SET name = ? WHERE id = ?";
     let result = database.execute_query_with_params(update_query, &["updated", "1"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
 
     // Select the first row from test_table where the name is "updated"
     let select_query = "SELECT * FROM test_table WHERE name = ?";
@@ -55,9 +55,9 @@ pub(crate) async fn test_query_with_params(mut database: dbc::Database) -> Resul
     // Insert two rows into test_table
     let insert_query = "INSERT INTO test_table (name) VALUES (?)";
     let result = database.execute_query_with_params(insert_query, &["test1"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
     let result = database.execute_query_with_params(insert_query, &["test2"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
 
     // Select all rows from test_table
     let select_query = "SELECT * FROM test_table";
@@ -79,7 +79,7 @@ pub(crate) async fn test_query_with_params(mut database: dbc::Database) -> Resul
     // Update the name of the first row to "updated"
     let update_query = "UPDATE test_table SET name = ? WHERE id = ?";
     let result = database.execute_query_with_params(update_query, &["updated", "1"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
 
     // Select the first row from test_table where the name is "updated"
     let select_query = "SELECT * FROM test_table WHERE name = ?";
@@ -104,14 +104,14 @@ pub(crate) async fn test_query_with_params_and_serialize(
     // Insert two rows into test_table
     let insert_query = "INSERT INTO test_table (name) VALUES (?)";
     let result = database.execute_query_with_params(insert_query, &["test1"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
     let result = database.execute_query_with_params(insert_query, &["test2"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
 
     // Update the name of the first row to "updated"
     let update_query = "UPDATE test_table SET name = ? WHERE id = ?";
     let result = database.execute_query_with_params(update_query, &["updated", "1"])?;
-    assert_eq!(result.affected_rows, 1);
+    assert_eq!(result.affected_row_count, 1);
 
     // Select the first row from test_table where the name is "updated"
     let select_query = "SELECT * FROM test_table WHERE id = ?";
