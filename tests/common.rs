@@ -121,7 +121,7 @@ pub(crate) async fn test_query_with_params_and_serialize(
     let result = serde_json::to_string(&result)?;
 
     // Verify the data returned by the query
-    let expected_result = r#"{"rows":[{"values":[{"Int":1},{"Bytes":"dXBkYXRlZA"}],"columns":[{"name":"id","column_type":"INT"},{"name":"name","column_type":"VARCHAR"}]}],"affected_rows":0}"#;
+    let expected_result = r#"{"rows":[{"values":[{"Int":1},{"Bytes":"dXBkYXRlZA"}],"columns":[{"name":"id","column_type":"INT"},{"name":"name","column_type":"VARCHAR"}]}],"affected_row_count":0}"#;
     assert_eq!(result, expected_result);
 
     _cleanup_database(database)?;
