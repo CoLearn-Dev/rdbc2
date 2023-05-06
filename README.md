@@ -1,7 +1,7 @@
 # Rust DataBase Connectivity (RDBC)
 
 This is a Rust implementation of the Java DataBase Connectivity (JDBC) API, a continuation and reimplementation of
-the [rdbc](https://github.com/tokio-rs/rdbc) project.
+the [rdbc](https://github.com/tokio-rs/rdbc) project. As of May 2023, rdbc is no longer maintained. 
 
 ## Goals
 
